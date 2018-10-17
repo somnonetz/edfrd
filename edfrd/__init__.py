@@ -4,7 +4,7 @@ from collections import namedtuple
 import numpy as np
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 
 
 def _raw(f, size, _):
@@ -14,8 +14,10 @@ def _raw(f, size, _):
 def _str(f, size, name):
     b = _raw(f, size, name)
     s = b.decode('ascii', 'ignore').strip()
+
     while s.endswith('\x00'):
         s = s[:-1]
+
     return s
 
 
@@ -91,14 +93,23 @@ def read_edf(file_path):
     return EDF(*edf_header)
 
 
-def read_signal(file_path, edf, index):
-    int_size = 2
+def read_data_records(file_path, edf):
     edf_header_size = sum([size for _, size, _ in EDF_HEADER])
     signal_header_size = sum([size for _, size, _ in EDF_HEADER])
 
-    pos = edf_header_size + edf.number_of_signals * signal_header_size
+    data_record_size = sum([signal.nr_of_samples_in_each_data_record for signal in edf.signals])
 
-    for i in range(index):
-        pos += edf.signals[i].nr_of_samples_in_each_data_record * int_size
+    with open(file_path, 'rb') as f:
+        f.seek(edf_header_size + edf.number_of_signals * signal_header_size)
 
-    return np.memmap(file_path, dtype=np.int16, offset=pos, shape=edf.signals[index].nr_of_samples_in_each_data_record)
+        for i in range(edf.number_of_data_records):
+            a = np.fromfile(f, count=data_record_size, dtype=np.int16)
+
+            data_record = []
+            offset = 0
+
+            for signal in edf.signals:
+                data_record.append(a[offset:offset + signal.nr_of_samples_in_each_data_record])
+                offset += signal.nr_of_samples_in_each_data_record
+
+            yield data_record

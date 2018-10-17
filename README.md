@@ -11,14 +11,16 @@ pip3 install --user edfrd
 ## Usage
 
 ```python
-from edfrd import read_edf, read_signal
+from edfrd import read_edf, read_data_records
 
 file_path = 'PATH/TO/FILE.edf'
 
-edf = read_edf(file_path)
+edf = read_edf(file_path)  # namedtuple
 
-signals = [
-    read_signal(file_path, edf, i)
-    for i in range(edf.number_of_signals)
+data_records = [
+    data_record for data_record in
+    read_data_records(file_path, edf)  # generator
 ]
+
+assert len(data_records[0]) == edf.number_of_signals
 ```
