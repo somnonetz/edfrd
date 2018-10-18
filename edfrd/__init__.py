@@ -1,19 +1,13 @@
-import warnings
 from collections import namedtuple
-
+import warnings
 import numpy as np
 
 
-__version__ = '0.3'
+__version__ = '0.4'
 
 
-def _raw(f, size, _):
-    return f.read(size)
-
-
-def _str(f, size, name):
-    b = _raw(f, size, name)
-    s = b.decode('ascii', 'ignore').strip()
+def _str(f, size, _):
+    s = f.read(size).decode('ascii', 'ignore').strip()
 
     while s.endswith('\x00'):
         s = s[:-1]
@@ -29,8 +23,6 @@ def _int(f, size, name):
     except ValueError:
         warnings.warn('{name}: Could not parse integer {s}.'.format(name=name, s=s))
 
-    return None
-
 
 def _float(f, size, name):
     s = _str(f, size, name)
@@ -40,11 +32,9 @@ def _float(f, size, name):
     except ValueError:
         warnings.warn('{name}: Could not parse float {s}.'.format(name=name, s=s))
 
-    return None
 
-
-def _discard(f, size, name):
-    _raw(f, size, name)
+def _discard(f, size, _):
+    f.read(size)
 
 
 EDF_HEADER = [
@@ -74,41 +64,43 @@ SIGNAL_HEADER = [
 ]
 
 
-EDF = namedtuple('EDF', [name for name, _, _ in EDF_HEADER] + ['signals'])
-Signal = namedtuple('Signal', [name for name, _, _ in SIGNAL_HEADER])
+Header = namedtuple('Header', [name for name, _, _ in EDF_HEADER] + ['signals'])
+SignalHeader = namedtuple('SignalHeader', [name for name, _, _ in SIGNAL_HEADER])
 
 
-def read_edf(file_path):
+def read_header(file_path):
     with open(file_path, 'rb') as f:
-        edf_header = [func(f, size, name) for name, size, func in EDF_HEADER]
-        number_of_signals = edf_header[-1]
+        header = [func(f, size, name) for name, size, func in EDF_HEADER]
+        number_of_signals = header[-1]
         signal_headers = [[] for _ in range(number_of_signals)]
 
         for name, size, func in SIGNAL_HEADER:
             for signal_header in signal_headers:
                 signal_header.append(func(f, size, name))
 
-    edf_header.append(tuple((Signal(*signal_header) for signal_header in signal_headers)))
+    header.append(tuple((SignalHeader(*signal_header) for signal_header in signal_headers)))
 
-    return EDF(*edf_header)
+    return Header(*header)
 
 
-def read_data_records(file_path, edf):
-    edf_header_size = sum([size for _, size, _ in EDF_HEADER])
+def read_data_records(file_path, header, start=None, end=None):
+    start = start if start is not None else 0
+    end = end if end is not None else header.number_of_data_records
+    int_size = 2
+    header_size = sum([size for _, size, _ in EDF_HEADER])
     signal_header_size = sum([size for _, size, _ in EDF_HEADER])
-
-    data_record_size = sum([signal.nr_of_samples_in_each_data_record for signal in edf.signals])
+    data_record_length = sum([signal.nr_of_samples_in_each_data_record for signal in header.signals])
 
     with open(file_path, 'rb') as f:
-        f.seek(edf_header_size + edf.number_of_signals * signal_header_size)
+        f.seek(header_size + header.number_of_signals * signal_header_size + start * data_record_length * int_size)
 
-        for i in range(edf.number_of_data_records):
-            a = np.fromfile(f, count=data_record_size, dtype=np.int16)
+        for _ in range(start, end):
+            a = np.fromfile(f, count=data_record_length, dtype=np.int16)
 
             data_record = []
             offset = 0
 
-            for signal in edf.signals:
+            for signal in header.signals:
                 data_record.append(a[offset:offset + signal.nr_of_samples_in_each_data_record])
                 offset += signal.nr_of_samples_in_each_data_record
 
