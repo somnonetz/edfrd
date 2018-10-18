@@ -26,7 +26,7 @@ for signal_header, signal in zip(header.signals, data_records[0]):
     print(
         signal_header.label,
         signal.size,
-        signal.dtype # numpy int16 array
+        signal.dtype  # numpy int16 array
     )
 
 # optional parameters, default is None
