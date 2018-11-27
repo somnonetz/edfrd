@@ -3,21 +3,18 @@ import warnings
 import numpy as np
 
 
-__version__ = '0.4'
+__version__ = '0.5'
 
 
 def _str(f, size, _):
     s = f.read(size).decode('ascii', 'ignore').strip()
-
     while s.endswith('\x00'):
         s = s[:-1]
-
     return s
 
 
 def _int(f, size, name):
     s = _str(f, size, name)
-
     try:
         return int(s)
     except ValueError:
@@ -26,7 +23,6 @@ def _int(f, size, name):
 
 def _float(f, size, name):
     s = _str(f, size, name)
-
     try:
         return float(s)
     except ValueError:
@@ -37,7 +33,7 @@ def _discard(f, size, _):
     f.read(size)
 
 
-EDF_HEADER = [
+_HEADER = [
     ('version', 8, _str),
     ('local_patient_identification', 80, _str),
     ('local_recording_identification', 80, _str),
@@ -50,7 +46,8 @@ EDF_HEADER = [
     ('number_of_signals', 4, _int),
 ]
 
-SIGNAL_HEADER = [
+
+_SIGNAL_HEADER = [
     ('label', 16, _str),
     ('transducer_type', 80, _str),
     ('physical_dimension', 8, _str),
@@ -64,17 +61,17 @@ SIGNAL_HEADER = [
 ]
 
 
-Header = namedtuple('Header', [name for name, _, _ in EDF_HEADER] + ['signals'])
-SignalHeader = namedtuple('SignalHeader', [name for name, _, _ in SIGNAL_HEADER])
+Header = namedtuple('Header', [name for name, _, _ in _HEADER] + ['signals'])
+SignalHeader = namedtuple('SignalHeader', [name for name, _, _ in _SIGNAL_HEADER])
 
 
 def read_header(file_path):
     with open(file_path, 'rb') as f:
-        header = [func(f, size, name) for name, size, func in EDF_HEADER]
+        header = [func(f, size, name) for name, size, func in _HEADER]
         number_of_signals = header[-1]
         signal_headers = [[] for _ in range(number_of_signals)]
 
-        for name, size, func in SIGNAL_HEADER:
+        for name, size, func in _SIGNAL_HEADER:
             for signal_header in signal_headers:
                 signal_header.append(func(f, size, name))
 
@@ -87,8 +84,8 @@ def read_data_records(file_path, header, start=None, end=None):
     start = start if start is not None else 0
     end = end if end is not None else header.number_of_data_records
     int_size = 2
-    header_size = sum([size for _, size, _ in EDF_HEADER])
-    signal_header_size = sum([size for _, size, _ in EDF_HEADER])
+    header_size = sum([size for _, size, _ in _HEADER])
+    signal_header_size = sum([size for _, size, _ in _HEADER])
     data_record_length = sum([signal.nr_of_samples_in_each_data_record for signal in header.signals])
 
     with open(file_path, 'rb') as f:
