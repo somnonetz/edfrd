@@ -85,7 +85,7 @@ def read_data_records(file_path, header, start=None, end=None):
     end = end if end is not None else header.number_of_data_records
     int_size = 2
     header_size = sum([size for _, size, _ in _HEADER])
-    signal_header_size = sum([size for _, size, _ in _HEADER])
+    signal_header_size = sum([size for _, size, _ in _SIGNAL_HEADER])
     data_record_length = sum([signal.nr_of_samples_in_each_data_record for signal in header.signals])
 
     with open(file_path, 'rb') as f:
