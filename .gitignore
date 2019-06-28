@@ -2,3 +2,4 @@
 dist
 .vscode
 edfrd.egg-info/
+__pycache__
