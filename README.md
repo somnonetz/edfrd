@@ -15,7 +15,7 @@ from edfrd import read_header, read_data_records
 
 file_path = 'PATH/TO/FILE.edf'
 
-header = read_header(file_path)
+header = read_header(file_path, calculate_number_of_data_records=True)
 
 data_records = [
     data_record for data_record in
