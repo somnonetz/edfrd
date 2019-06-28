@@ -98,12 +98,10 @@ def read_header(file_path, calculate_number_of_data_records=None):
         number_of_data_records = header[7]
 
         if calculated_number_of_data_records != number_of_data_records:
-            warnings.warn(
-                'number_of_data_records {n} in header does not match calculated number_of_data_records {cn}'.format(
-                    n=number_of_data_records,
-                    cn=calculated_number_of_data_records
-                )
-            )
+            warnings.warn('number_of_data_records {n} in header does not match calculated number {cn}'.format(
+                n=number_of_data_records,
+                cn=calculated_number_of_data_records
+            ))
 
         header[7] = calculated_number_of_data_records
 
