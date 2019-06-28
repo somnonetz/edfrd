@@ -85,7 +85,6 @@ def read_header(file_path, calculate_number_of_data_records=None):
 
     if calculate_number_of_data_records:
         data_record_size = sum([signal.nr_of_samples_in_each_data_record for signal in header[-1]]) * INT_SIZE
-
         file_size_without_headers = os.path.getsize(file_path) - (HEADER_SIZE + SIGNAL_HEADER_SIZE * number_of_signals)
 
         if file_size_without_headers % data_record_size != 0:
