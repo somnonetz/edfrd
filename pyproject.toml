@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "edfrd"
-version = "0.6"
+version = "0.7"
 authors = ["Christoph Jansen <Christoph.Jansen@htw-berlin.de>"]
 license = "LGPL-3.0"
 readme = "README.md"
 repository = "https://github.com/somnonetz/edfrd"
 homepage = "https://cbmi.htw-berlin.de/"
-description = "edfrd is a Python 3 software library to read EDF files."
+description = "edfrd is a Python 3 software library to read and write EDF files."
 
 [tool.poetry.dependencies]
 python = "^3.4"
