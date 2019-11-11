@@ -79,7 +79,7 @@ buffer_length = (end - start) * signal_header.nr_of_samples_in_each_data_record
 buffer = np.empty(buffer_length, dtype=np.int16)
 pointer = 0
 
-for data_record in read_data_records(start, end):
+for data_record in read_data_records(file_path, header, start=start, end=end):
     buffer[pointer:pointer+signal_header.nr_of_samples_in_each_data_record] = data_record[signal_index]
     pointer += signal_header.nr_of_samples_in_each_data_record
 
